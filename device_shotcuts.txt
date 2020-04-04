@@ -1,0 +1,65 @@
+Shortcuts:
+
+    Ctrl+f
+        switch fullscreen mode
+
+    Ctrl+g
+        resize window to 1:1 (pixel-perfect)
+
+    Ctrl+x
+    Double-click on black borders
+        resize window to remove black borders
+
+    Ctrl+h
+    Middle-click
+        click on HOME
+
+    Ctrl+b
+    Ctrl+Backspace
+    Right-click (when screen is on)
+        click on BACK
+
+    Ctrl+s
+        click on APP_SWITCH
+
+    Ctrl+m
+        click on MENU
+
+    Ctrl+Up
+        click on VOLUME_UP
+
+    Ctrl+Down
+        click on VOLUME_DOWN
+
+    Ctrl+p
+        click on POWER (turn screen on/off)
+
+    Right-click (when screen is off)
+        power on
+
+    Ctrl+o
+        turn device screen off (keep mirroring)
+
+    Ctrl+r
+        rotate device screen
+
+    Ctrl+n
+       expand notification panel
+
+    Ctrl+Shift+n
+       collapse notification panel
+
+    Ctrl+c
+        copy device clipboard to computer
+
+    Ctrl+v
+        paste computer clipboard to device
+
+    Ctrl+Shift+v
+        copy computer clipboard to device
+
+    Ctrl+i
+        enable/disable FPS counter (print frames/second in logs)
+
+    Drag & drop APK file
+        install APK from computer
