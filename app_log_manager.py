@@ -9,6 +9,7 @@ class LogDBManager(object):
 		self.cursor = None
 		self.con = self.create_db(device_name)
 		self.cursor = self.create_table(self.con)
+		self.last_fetched_row = 0 
 		
 	def create_db(self, device_name):
 		try:
@@ -43,12 +44,19 @@ class LogDBManager(object):
 	def get_records(self, filter_text):
 		all_data = None
 		if filter_text is not None:
-			sql_command = "SELECT * FROM logs WHERE	 logs.loginfo LIKE '%" + filter_text + "%';"
-			print("Command: " + sql_command)
+			sql_command = ""
+			if self.last_fetched_row == 0:
+				sql_command = "SELECT * FROM logs WHERE	 logs.loginfo LIKE '%" + filter_text + "%';"
+			else:
+				sql_command = "SELECT * FROM logs WHERE logs.loginfo LIKE '%" + filter_text + "%' AND logs.ID > " + str(self.last_fetched_row) + ";"
 			all_data = self.cursor.execute(sql_command).fetchall()
 		else:
-			all_data = self.cursor.execute("SELECT * from logs").fetchall()
+			if self.last_fetched_row == 0:
+				all_data = self.cursor.execute("SELECT * from logs").fetchall()
+			else:
+				all_data = self.cursor.execute("SELECT * from logs WHERE logs.ID > " + str(self.last_fetched_row) + ";").fetchall()
 		returned_data = []
 		for row in all_data:
 			returned_data.append(row[1])
+		self.last_fetched_row += len(all_data) 
 		return returned_data

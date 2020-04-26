@@ -11,6 +11,7 @@ except:
 	import Queue as queue
 	
 from app_log_manager import LogDBManager
+from app_async_logfile_reader import AsyncLogFileReader
 
 def save_text_with_append(filename):
 	try:
@@ -83,9 +84,7 @@ class ThreadSafeConsole(tkinter.Text):
 		self.filter_text = None
 		self.db_manager = None
 		self.log = None
-		#self.update_me()
 		
-
 	def createLog(self, device_name):
 		if not os.path.exists("logs"):
 			os.makedirs("logs")
@@ -98,60 +97,43 @@ class ThreadSafeConsole(tkinter.Text):
 			f.close()
 			
 		self.log = logName
+		
+		self.log_reader = AsyncLogFileReader(self.log, self)
+		self.log_reader.start()
 
 	def setFilter(self, filter_text):
 		self.filter_text = filter_text
+		
+	def updateConsole(self, line):
+		self.insert(tkinter.END, line)
 	
 	def write(self, line, device_name):
 		timeStamp = time.strftime("%H:%M:%S", time.localtime())
-		printLine = ""
 		if line != "\n":
 			printLine = timeStamp + " " + line
 		else:
 			printLine = line
-		if self.db_manager is None:
-			self.db_manager = LogDBManager(device_name)
-		self.db_manager.insert_log_to_db(printLine)
-		#if self.manager.optLogToFile.get():
 		if self.log is None:
 			self.createLog(device_name)
 		if self.log is not None:
 			with save_text_with_append(self.log) as log:
 				try:
-					log.write(line.decode("utf-8"))
+					log.write(line)
+					log.flush()
 				except:
-					pass
-		self.update_console()
+					pass 
 
 	def clear(self):
 		self.queue.put(None)
 
-	def update_me(self):
-		try:
-			while 1:
-				self.update_console()
-		except:
-			pass
-		self.highlight_errors()
-		if len(self.error_indexes) > 0:
-			self.manager.progress_colour("red")
-		elif len(self.warning_indexes) > 0:
-			self.manager.progress_colour("yellow")
-		self.after(100, self.update_me)
-		
-		
 	def show_results(self, term):
 		lines = self.db_manager.get_records(term)
 		for line in lines:
 			self.insert(tkinter.END, line)
-		
-	def update_console(self):
-		if self.db_manager is not None:
-			if self.filter_text is None:
-				lines = self.db_manager.get_records(self.filter_text)
-				for line in lines:
-					self.insert(tkinter.END, line)
-			#self.see(tkinter.END)
+
+	def process(self, lines):
+		for line in lines:
+			self.insert(tkinter.END, line)
 
 	def highlight_errors(self):
 		for indexes in self.error_indexes:

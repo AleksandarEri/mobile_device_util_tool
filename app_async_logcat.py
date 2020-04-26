@@ -32,10 +32,10 @@ class AsyncLogcatReader(threading.Thread):
 			try:
 				line_str = line.decode('utf-8')
 				if self.package_name is None:
-					self._queue.put(line)
+					self._queue.put(line_str)
 				else:
 					if self.package_name in line_str:
-						self._queue.put(line)
+						self._queue.put(line_str)
 			except:
 				pass
 		self._fd.close()

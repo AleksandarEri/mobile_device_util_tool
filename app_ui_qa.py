@@ -26,6 +26,7 @@ from app_async_logcat_writer import AsyncLogcatWriter
 from app_async_console import ThreadSafeConsole, StdoutRedirector, StderrRedirector
 from app_android_adb_server import ADB, ProfileMemory
 from app_ios_device_connector import IOSDeviceConnector
+from app_device_log_tab import DeviceLogTab
 
 def processOutput(process):
 	while True:
@@ -62,6 +63,8 @@ class TabQA(tk.Frame):
 		
 		# Thread for scrcpy
 		self.scrycopy_thread = None
+		
+		self.device_tabs = {}
 		
 		self.buildGUI()
 		
@@ -113,7 +116,7 @@ class TabQA(tk.Frame):
 		self.chRecordScreen = ttk.Checkbutton(self.lDevices, text = "Record Screen", variable = self.optRecordScreen, command = None)
 		self.chRecordScreen.grid(column = 0, row = 1, sticky = 'W')
 		
-		self.chLogToFile = ttk.Checkbutton(self.lDevices, text = "Log to File", variable = self.optLogToFile, command = None)
+		self.chLogToFile = ttk.Checkbutton(self.lDevices, text = "Log to File", variable = self.optLogToFile, command = self.update_log_to_file_for_device)
 		self.chLogToFile.grid(column = 1, row = 1, sticky = 'W')
 		
 		self.btnShowDevice = ttk.Button(self.lDevices, text = "Show Device", command = self.show_device, width = 15)
@@ -122,58 +125,24 @@ class TabQA(tk.Frame):
 		self.btnMemoryInfo = ttk.Button(self.lDevices, text = "MemoryInfo", command = self.memory_info, width = 15)
 		self.btnMemoryInfo.grid(column = 1, row = 2, sticky = 'W', pady = 3)
 		
-		# Console
-		self.outputFont = tkinter.font.Font(family="Courier", size=10)
+		self.lDevicesLogs = tkinter.LabelFrame(self, text = "Devices Logs", padx = 5, pady = 5)
+		self.lDevicesLogs.grid(column = 0, row = 4, sticky='NSWE', padx=5, pady=5, columnspan=5)
+		
+		
+		self.nTabs = tkinter.ttk.Notebook(self.lDevicesLogs)
+		self.nTabs.grid(sticky = 'WENS')
+		
+		
 
-		# Search Input
-		self.androidFilterVar = tkinter.StringVar()
-		self.androidFilterVar.trace("w", lambda name, index, mode: None )
-		self.eSearchScenes = tkinter.Entry(self, textvariable = self.androidFilterVar)
-		self.eSearchScenes.grid(row = 3, column = 0, columnspan=2, sticky = "ENW")
-		
-		self.bSearch = tkinter.ttk.Button(self, text = "Search",	command = self.search_in_logs)
-		self.bSearch.grid(column = 2, row = 3, sticky = "W")
-		self.buttons += [self.bSearch]
-		
-		self.bClear = tkinter.ttk.Button(self, text = "Clear",	command = self.clear_search)
-		self.bClear.grid(column = 2, row = 3, sticky = "E", columnspan=1)
-		self.buttons += [self.bClear]
-		
-		self.bRefresh = tkinter.ttk.Button(self, text = "Refresh",	command = self.refresh_search )
-		self.bRefresh.grid(column = 3, row = 3, sticky = "ENW")
-		self.buttons += [self.bRefresh]
-		
-		self.txtOutput = ThreadSafeConsole(self, wrap='word', font = self.outputFont, bg="black", fg="white")
-		self.txtOutput.grid(column = 0, row = 4, sticky='NSWE', padx=5, pady=5, columnspan=4)
-		self.txtOutput.insert(tkinter.END, "Device Log" + os.linesep + "-----------" + os.linesep + os.linesep)
-		self.sConsole = tkinter.Scrollbar(self, orient = tkinter.VERTICAL)
-		self.sConsole.config(command = self.txtOutput.yview)
-		self.sConsole.grid(column = 5, row = 4, sticky = 'NSEW')
-
-		self.txtOutput.config(yscrollcommand=self.sConsole.set)
-
-	def search_in_logs(self, event = None):
-		search_term = self.androidFilterVar.get()
-		self.txtOutput.delete(1.0, tkinter.END)
-		self.txtOutput.setFilter(search_term)
-		self.txtOutput.show_results(search_term)
-		
-	def clear_search(self, event = None):
-		self.txtOutput.delete(1.0, tkinter.END)
-		self.txtOutput.setFilter(None)
-		self.androidFilterVar.set(None)
-		self.eSearchScenes.config(textvariable = None)
-		
-	def refresh_search(self, event = None):
-		search_term = self.androidFilterVar.get()
-		self.txtOutput.delete(1.0, tkinter.END)
-		self.txtOutput.setFilter(search_term)
-		self.txtOutput.show_results(search_term)
-		
 	def memory_info(self):
 		app = self.selected_application.get()
 		print("Application: " + app )
 		self.memory_profiler = ProfileMemory(self.adb, app, 2)
+		
+	def update_log_to_file_for_device(self, event = None):
+		selected_device = self.selected_device.strip('\t')
+		device_log = self.device_tabs[selected_device]
+		device_log.setLogToFile(self.optLogToFile)
 		
 	def refresh_devices(self, event = None):
 		self.list_of_connected_devices = {}
@@ -212,15 +181,8 @@ class TabQA(tk.Frame):
 		
 		
 	def start_console_process(self):
-		device_name = self.adb.current_device_name.rstrip('\t')
-		command_param = [self.adb.adbPath, "-s", device_name, "logcat", "-d"]
-		self.adb.logcat = subprocess.Popen(command_param, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, shell=False)
-		self.adb.stdout_queue = queue.Queue()
-		self.adb.package_name = self.selected_application.get()
-		self.adb.stdout_reader = AsyncLogcatReader(self.adb.logcat, self.adb.stdout_queue, self.selected_application.get(), device_name)
-		self.adb.stdout_reader.start()
-		self.console_writer = AsyncLogcatWriter(self, self.adb.stdout_reader, self.adb.stdout_queue, 2000, device_name)
-		self.console_writer.start()
+		device_log = self.device_tabs[self.selected_device]
+		device_log.show_console()
 		
 	def start_scrycopy_process(self):
 		scrcpy_path = os.path.join(os.getcwd(), "utils","scrcpy","scrcpy.exe")
@@ -237,6 +199,7 @@ class TabQA(tk.Frame):
 	def on_device_selected(self, event = None):
 		device_name = str(self.cbDevices.get())
 		if len(device_name) > 0:
+			device_name = device_name.strip('\t')
 			commandParams = ["get_os_version", device_name]
 			self.adb.process_args(commandParams)
 			self.deviceOSVersions[device_name] = self.adb.result
@@ -257,6 +220,9 @@ class TabQA(tk.Frame):
 			applications = choices
 			
 			self.selected_application.set(applications[0])
+			
+			commandParams = ["clear_log", device_name]
+			self.adb.process_args(commandParams)
 
 			self.applications = tkinter.ttk.Combobox(self.lfApplicationUtils, state = "readonly", textvariable = self.selected_application, width = 40)
 			self.applications.config(values = applications)
@@ -275,6 +241,12 @@ class TabQA(tk.Frame):
 			
 			self.bClearData = ttk.Button(self.lfApplicationUtils, text = "Run Application", command = self.run_application, width = 20)
 			self.bClearData.grid(column = 1, row = 3, sticky = 'W', pady = 5)
+			
+			self.selected_device = device_name
+			if not device_name in self.device_tabs:
+				self.device_tabs[device_name] = DeviceLogTab(self, device_name)
+				device_log = self.device_tabs[device_name]
+				device_log.show_console()
 			
 			
 	def clear_purchase(self):

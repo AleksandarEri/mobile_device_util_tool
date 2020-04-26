@@ -84,7 +84,6 @@ class Application(tkinter.Frame):
 		self.set_configuration()
 		self.create_tabs()
 		self.create_status_bar()
-		self.create_progress_bar()
 		self.root.title("Device Manager v0.3")
 
 	def create_icon(self):

@@ -259,8 +259,12 @@ class ADB(object):
 				"process_function": self.on_broadcast_message
 			},
 			"console": {
-				"args": "-s {args[1]} logcat -b default -v time -v color -d",
+				"args": "-s {args[1]} logcat -v time",
 				"process_function": self.on_console_output
+			},
+			"clear_log": {
+				"args": "-s {args[1]} logcat -b all -c",
+				"process_function": self.on_broadcast_message
 			}
 		}
 		
