@@ -16,6 +16,7 @@ import platform
 
 from app_ui_qa				import TabQA
 from app_ui_ios				import TabIOS
+from app_ui_test            import TabTest
 from app_progress_bar		import ProgressBar
 
 # Class Application
@@ -32,7 +33,7 @@ class Application(tkinter.Frame):
 		tkinter.Frame.__init__(self, self.root)
 		self.grid()
 
-		self.size = (840, 540)
+		self.size = (950, 540)
 		self.system = platform.system()
 		self.latestSettingsRead = False
 
@@ -87,9 +88,6 @@ class Application(tkinter.Frame):
 		self.root.title("Device Manager v0.3")
 
 	def create_icon(self):
-		#iconFile = "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"
-		#icon = tkinter.PhotoImage(data=iconFile)
-		#self.root.tk.call('wm', 'iconphoto', self.root._w, icon)
 		pass
 
 	def set_configuration(self):
@@ -104,6 +102,7 @@ class Application(tkinter.Frame):
 		self.nTabs.grid(sticky = 'WENS')
 		self.fTabQA = TabQA(self)
 		self.fTabIOS = TabIOS(self)
+		self.fTabTest = TabTest(self)
 
 	def create_status_bar(self):
 		self.statusBar = tkinter.Label(self, textvariable = self.vStatusMessage)
@@ -127,28 +126,7 @@ class Application(tkinter.Frame):
 	# Pre Run and On Open Methods
 	@staticmethod
 	def cleanupLogs():
-		if os.path.exists("build/logs"):
-			maxLogs = 3
-			if len(os.listdir("build/logs")) > maxLogs:
-				logs = sorted([log for log in os.listdir("build/logs") if log.endswith(".log")])
-				prefixes = ["Atlas", "Exe", "Build", "Data"]
-				sufixes = []
-				for log in logs:
-					prefix = log.split('_')[0]
-					if prefix not in prefixes:
-						sufixes.append(prefix)
-
-					sufix = '_'.join(log.split('_')[3:])
-					if sufix not in sufixes:
-						sufixes.append(sufix)
-
-				for prefix in prefixes:
-					for sufix in sufixes:
-						sublogs = [log for log in logs if log.startswith(prefix) and log.endswith(sufix)]
-						for sublog in sublogs:
-							logs.remove(sublog)
-						for i in range(len(sublogs) - maxLogs):
-							os.remove("build/logs/%s" % sublogs[i])
+		pass
 
 	def progress_step(self, arg):
 		self.progress.step(arg)

@@ -51,11 +51,9 @@ class StderrRedirector(object):
 		self.master = master
 		self.manager = self.master.manager
 		rootDir = master.manager.rootDir
-		self.errorLog = rootDir + "/build/logs/error.log"
-		if not os.path.exists(rootDir + "/build"):
-			os.makedirs(rootDir + "/build")
-		if not os.path.exists(rootDir + "/build/logs"):
-			os.makedirs(rootDir + "/build/logs")
+		self.errorLog = rootDir + "/logs/error.log"
+		if not os.path.exists(rootDir + "/logs"):
+			os.makedirs(rootDir + "/logs")
 
 
 	def write(self, string):
@@ -153,15 +151,7 @@ class TabLog(tkinter.Frame):
 		self.lbLogs = tkinter.Listbox(self, selectmode = tkinter.EXTENDED, font = tkinter.font.Font(size = 7),
 									  exportselection=0)
 		self.lbLogs.grid(column = 0, row = 0, columnspan = 4, sticky = "NWSE", padx = 5, pady = 5)
-		self.lbLogs.bind("<Double-Button-1>",   self.mtd_open_log)
-		self.lbLogs.bind("<Return>",            self.mtd_open_log)
-		self.lbLogs.bind("<Delete>",            self.mtd_delete_log)
-		self.lbLogs.bind("<F5>",                self.updateLogs)
 		self.updateLogs()
-
-		tkinter.ttk.Button(self, text = "Open",		command = self.mtd_open_log).grid(column = 0, row = 2, sticky = 'NEWS', pady = 5)
-		tkinter.ttk.Button(self, text = "Delete",	command = self.mtd_delete_log).grid(column = 1, row = 2, sticky = 'NEWS', pady = 5)
-		tkinter.ttk.Button(self, text = "Refresh",	command = self.updateLogs).grid(column = 3, row = 2, sticky = 'NEWS', pady = 5)
 
 		self.sLogs = tkinter.Scrollbar(self, orient = tkinter.VERTICAL)
 		self.sLogs.config(command = self.lbLogs.yview)
@@ -174,16 +164,7 @@ class TabLog(tkinter.Frame):
 
 		self.txtOutput = ThreadSafeConsole(self, wrap='word', font = self.outputFont, bg="black", fg="white")
 		self.txtOutput.grid(column = 5, row = 0, sticky='NSWE', padx=5, pady=5)
-		# self.txtOutput.insert(tkinter.END,  "__  __ _    _  _____     __  __                                   "
-		# 				+ os.linesep + " |  \/  | |  | |/ ____|   |  \/  |                                  "
-		# 				+ os.linesep + " | \  / | |__| | |  __    | \  / | __ _ _ __   __ _  __ _  ___ _ __ "
-		# 				+ os.linesep + " | |\/| |  __  | | |_ |   | |\/| |/ _` | '_ \ / _` |/ _` |/ _ \ '__|"
-		# 				+ os.linesep + " | |  | | |  | | |__| |   | |  | | (_| | | | | (_| | (_| |  __/ |   "
-		# 				+ os.linesep + " |_|  |_|_|  |_|\_____|   |_|  |_|\__,_|_| |_|\__,_|\__, |\___|_|   "
-		# 				+ os.linesep + "                                                     __/ |          "
-		# 				+ os.linesep + "                                                    |___/           "
-		# 				+ os.linesep)
-		self.txtOutput.insert(tkinter.END, "MHG Manager" + os.linesep + "-----------" + os.linesep + os.linesep)
+		self.txtOutput.insert(tkinter.END, "Device Manager" + os.linesep + "-----------" + os.linesep + os.linesep)
 
 		sys.stdout = StdoutRedirector(self)
 		sys.stderr = StderrRedirector(self)
@@ -203,18 +184,13 @@ class TabLog(tkinter.Frame):
 
 	def create_context_menus(self):
 		self.menuConsole = tkinter.Menu(self.txtOutput, tearoff=0)
-		self.menuConsole.add_command(label="Copy",			command=self.mtd_btn_copy)
-		self.menuConsole.add_command(label="Copy All",		command=self.mtd_btn_copy_all)
 		self.menuConsole.add_separator()
 		self.menuConsole.add_command(label="Clear console",	command=self.mtd_btn_clear_console)
 		self.txtOutput.bind("<Button-3>", self.menuConsolePopup)
 
 		self.menuLogs = tkinter.Menu(self.lbLogs, tearoff=0)
-		self.menuLogs.add_command(label="Open",		command=self.mtd_open_log)
-		self.menuLogs.add_command(label="Delete",	command=self.mtd_delete_log)
 		self.menuLogs.add_separator()
 		self.menuLogs.add_command(label="Refresh",	command=self.updateLogs)
-		self.lbLogs.bind("<Button-3>", self.menuLogsPopup)
 
 	# Console Context Menu
 
@@ -226,7 +202,6 @@ class TabLog(tkinter.Frame):
 		self.manager.root.clipboard_clear()
 		self.manager.root.clipboard_append(self.txtOutput.get(1.0, tkinter.END))
 
-
 	def mtd_btn_clear_console(self):
 		self.txtOutput.clear()
 
@@ -234,37 +209,10 @@ class TabLog(tkinter.Frame):
 		self.menuConsole.post(event.x_root, event.y_root)
 
 	# Logs Context Menu
-
 	def updateLogs(self, event = None):
 		self.lbLogs.delete(0, tkinter.END)
-		logsFolder = "build/logs"
+		logsFolder = "logs"
 		if os.path.exists(self.rootDir + "/" + logsFolder):
 			for log in os.listdir(self.rootDir + "/" + logsFolder):
 				if os.path.isfile(self.rootDir + "/" + logsFolder + "/" + log):
 					self.lbLogs.insert(tkinter.END, log)
-
-	def mtd_open_log(self, event = None):
-		logsFolder = "build/logs"
-		for index in self.lbLogs.curselection():
-			filename = self.lbLogs.get(index)
-			if os.path.exists(self.rootDir + "/" + logsFolder + "/" + filename):
-				try:
-					os.system("start notepad++ %s" % (self.rootDir + "/" + logsFolder + "/" + filename))
-				except:
-					os.system("start notepad %s" % (self.rootDir + "/" + logsFolder + "/" + filename))
-			else:
-				print("File %s does not exist." % filename)
-
-	def mtd_delete_log(self, event = None):
-		if (len(self.lbLogs.curselection()) > 0) and (tkinter.messagebox.askyesno("Delete Log", "Are you sure you want to delete selected log%s?" % ('s' if len(self.lbLogs.curselection()) > 1 else ''))):
-			logsFolder = "build/logs"
-			for index in self.lbLogs.curselection():
-				filename = self.lbLogs.get(index)
-				if os.path.exists(self.rootDir + "/" + logsFolder + "/" + filename):
-					os.remove(self.rootDir + "/" + logsFolder + "/" + filename)
-				else:
-					print("File %s does not exist." % filename)
-			self.updateLogs()
-
-	def menuLogsPopup(self, event):
-		self.menuLogs.post(event.x_root, event.y_root)

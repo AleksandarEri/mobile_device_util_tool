@@ -1,0 +1,4 @@
+app_installed {args[1]}
+remove_app {args[1]}
+install_apk {args[4]} {args[2]} {args[1]}
+run_app {args[5]}
